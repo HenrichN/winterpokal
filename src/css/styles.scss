@@ -8,3 +8,30 @@ button,
 textarea {
     margin: 0.5em;
 }
+
+.week {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.day {
+    background-color: #4AA2A6;
+    width: 13%;
+    height: 150px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.date-container {
+    text-align: center;
+    background-color: #FCDD62;
+    width: 100%;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+.date {
+    font-size: 5vh;
+    color: #F5F3F2;
+}
