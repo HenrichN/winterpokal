@@ -39,7 +39,8 @@
     "test": "cycle-scripts test",
     "build": "cycle-scripts build",
     "eject": "cycle-scripts eject",
-    "clean": "cycle-scripts clean"
+    "clean": "cycle-scripts clean",
+    "testserver": "json-server --watch db.json"
   },
   "lintStaged": {
     "*.{js,jsx,ts,tsx}": [
