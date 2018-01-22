@@ -7,7 +7,7 @@ import { makeHTTPDriver } from '@cycle/http';
 import * as _ from 'lodash';
 import { BaseSources, BaseSinks } from './interfaces';
 import { FantasySinks } from '@cycle/run/lib/types';
-import { getWeeks } from './date-helpers';
+import { getDays, mergeDaysAndEntries } from './model';
 import { renderWeek } from './components/week';
 
 function main(sources: BaseSources): FantasySinks<BaseSinks> {
@@ -35,11 +35,14 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
 
     const sinks = {
         DOM: xs.combine(
-            sources.HTTP.select('entries').flatten(),
-            xs.of(getWeeks()))
+            sources.HTTP.select('entries').flatten()
+                .map(entry => {
+                    return entry.body.map((e: any) => e.data);
+                }),
+            xs.of(getDays()))
+            .map(([res, days]) => mergeDaysAndEntries(days, res))
             .debug()
-            .map(([res, weeks]) => {
-                console.log('response here', weeks);
+            .map(weeks => {
                 let acc: VNode[] = [];
                 let elements = _.reduce(weeks, (acc, cur, index) => {
                     acc.push(renderWeek(cur));

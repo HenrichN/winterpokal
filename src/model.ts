@@ -1,7 +1,8 @@
 import * as _ from 'lodash';
 import * as moment from 'moment';
+import { WinterpokalEntry, Day } from './interfaces';
 
-export function getWeeks() {
+export function getDays() {
   const WINTERPOKAL_START_DATE = '2017-10-30';
   const start = moment(WINTERPOKAL_START_DATE).startOf('isoweek' as any);
   // console.log(start.format());
@@ -12,5 +13,13 @@ export function getWeeks() {
     days.push(moment(m));
   }
   days.pop();
-  return _.chunk(days, 7);
+  return days;
+}
+
+export function mergeDaysAndEntries(days: moment.Moment[], entries: WinterpokalEntry[]): Day[][] {
+  const result = days.map(day => ({
+    date: day,
+    entry: entries.find(entry => moment(entry.entry.date).isSame(day))
+  }));
+  return _.chunk(result, 7);
 }
