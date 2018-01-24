@@ -11,34 +11,53 @@ import { getDays, mergeDaysAndEntries } from './model';
 import { renderWeek } from './components/week';
 
 function main(sources: BaseSources): FantasySinks<BaseSinks> {
-    const apiKey$ = sources.storage.local
-        .getItem('apiKey')
-        .startWith('');
+    const apiToken$ = sources.storage.local
+        .getItem('api-token');
 
-    const updateEntry$ = sources.DOM.select('.day')
+    const dateToUpdate$ = sources.DOM.select('.day')
         .events('click')
         .debug(ev => console.log((ev.target as any).dataset['day']))
-        .map(() => ({
-            url: 'http://localhost:3000/entries',
+        .map(ev => (ev.target as any).dataset['day']);
+
+    const updateEntry$ = xs.combine(dateToUpdate$, apiToken$)
+        .debug()
+        .map(([date, apiToken]) => ({
+            url: 'https://cors-anywhere.herokuapp.com/https://winterpokal.mtb-news.de/api/v1/entries/add.json',
             category: 'update',
-            method: 'POST'
+            method: 'POST',
+            send: {
+                "category": "radfahren",
+                date,
+                "duration": 40,
+                "distance": 12000,
+                "nightride": false,
+                "description": "Maloche"
+            },
+            headers: {
+                'api-token': apiToken
+            }
         }));
 
-    const entries$ = sources.HTTP.select('update')
-        .map(() => true)
-        .startWith(true)
-        .map(() => ({
-            url: 'http://localhost:3000/entries',
+    const entries$ = xs.combine(
+        sources.HTTP.select('update')
+            .map(() => true)
+            .startWith(true),
+        apiToken$)
+        .debug()
+        .map(([_, apiToken]) => ({
+            url: 'https://cors-anywhere.herokuapp.com/https://winterpokal.mtb-news.de/api/v1/entries/my.json',
             category: 'entries',
-            method: 'GET'
+            method: 'GET',
+            headers: {
+                'api-token': apiToken
+            }
         }));
 
     const sinks = {
         DOM: xs.combine(
-            sources.HTTP.select('entries').flatten()
-                .map(entry => {
-                    return entry.body.map((e: any) => e.data);
-                }),
+            sources.HTTP.select('entries')
+                .flatten()
+                .map(entry => entry.body.data),
             xs.of(getDays()))
             .map(([res, days]) => mergeDaysAndEntries(days, res))
             .debug()
