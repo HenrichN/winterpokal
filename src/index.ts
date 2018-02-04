@@ -16,11 +16,9 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
 
     const dateToUpdate$ = sources.DOM.select('.day')
         .events('click')
-        .debug(ev => console.log((ev.target as any).dataset['day']))
         .map(ev => (ev.target as any).dataset['day']);
 
     const updateEntry$ = xs.combine(dateToUpdate$, apiToken$)
-        .debug()
         .map(([date, apiToken]) => ({
             url: 'https://cors-anywhere.herokuapp.com/https://winterpokal.mtb-news.de/api/v1/entries/add.json',
             category: 'update',
@@ -40,10 +38,10 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
 
     const entries$ = xs.combine(
         sources.HTTP.select('update')
+            .flatten()
             .map(() => true)
             .startWith(true),
         apiToken$)
-        .debug()
         .map(([_, apiToken]) => ({
             url: 'https://cors-anywhere.herokuapp.com/https://winterpokal.mtb-news.de/api/v1/entries/my.json',
             category: 'entries',
@@ -59,8 +57,7 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
                 .flatten()
                 .map(entry => entry.body.data),
             xs.of(getDays()))
-            .map(([res, days]) => mergeDaysAndEntries(days, res))
-            .debug()
+            .map(([entries, days]) => mergeDaysAndEntries(days, entries))
             .map(weeks => {
                 let acc: VNode[] = [];
                 let elements = _.reduce(weeks, (acc, cur, index) => {
