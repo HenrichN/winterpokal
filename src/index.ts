@@ -20,35 +20,38 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
         .events('click')
         .map(ev => (ev.target as any).dataset['day']);
 
-    const updateEntry$ = xs.combine(dateToUpdate$, apiToken$)
-        .map(([date, apiToken]) => Requests.update(date, apiToken as string));
-
-    const entries$ = xs.combine(
-        sources.HTTP.select('update')
-            .flatten()
-            .map(() => true)
-            .startWith(true),
-        apiToken$)
-        .map(([_, apiToken]) => Requests.fetch(apiToken as string));
-
-    const sinks = {
-        DOM: xs.combine(
-            sources.HTTP.select('entries')
+    const intent = {
+        updateEntry$: xs.combine(dateToUpdate$, apiToken$)
+            .map(([date, apiToken]) => Requests.update(date, apiToken as string)),
+        entries$: xs.combine(
+            sources.HTTP.select('update')
                 .flatten()
-                .map(response => Requests.mapResponse()(response)),
-            xs.of(getDays()))
-            .map(([entries, days]) => mergeDaysAndEntries(days, entries))
-            .map(weeks => {
-                let acc: VNode[] = [];
-                let elements = _.reduce(weeks, (acc, cur, index) => {
-                    acc.push(renderWeek(cur));
-                    return acc;
-                }, acc);
-                return div('.test', acc);
-            }),
-        HTTP: xs.merge(entries$, updateEntry$)
+                .map(() => true)
+                .startWith(true),
+            apiToken$)
+            .map(([_, apiToken]) => Requests.fetch(apiToken as string))
     };
-    return sinks;
+
+    const model$ = xs.combine(
+        sources.HTTP.select('entries')
+            .flatten()
+            .map(response => Requests.mapResponse()(response)),
+        xs.of(getDays()))
+        .map(([entries, days]) => mergeDaysAndEntries(days, entries));
+
+    const view$ = model$.map(weeks => {
+        let acc: VNode[] = [];
+        let elements = _.reduce(weeks, (acc, cur, index) => {
+            acc.push(renderWeek(cur));
+            return acc;
+        }, acc);
+        return div('.test', acc);
+    });
+
+    return {
+        DOM: view$,
+        HTTP: xs.merge(intent.entries$, intent.updateEntry$)
+    };
 }
 
 const drivers = {
