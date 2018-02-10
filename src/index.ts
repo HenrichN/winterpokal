@@ -9,6 +9,8 @@ import { BaseSources, BaseSinks } from './interfaces';
 import { FantasySinks } from '@cycle/run/lib/types';
 import { getDays, mergeDaysAndEntries } from './model';
 import { renderWeek } from './components/week';
+import * as Requests from './requests';
+import { fetch } from './requests';
 
 function main(sources: BaseSources): FantasySinks<BaseSinks> {
     const apiToken$ = sources.storage.local
@@ -19,22 +21,7 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
         .map(ev => (ev.target as any).dataset['day']);
 
     const updateEntry$ = xs.combine(dateToUpdate$, apiToken$)
-        .map(([date, apiToken]) => ({
-            url: 'https://cors-anywhere.herokuapp.com/https://winterpokal.mtb-news.de/api/v1/entries/add.json',
-            category: 'update',
-            method: 'POST',
-            send: {
-                "category": "radfahren",
-                date,
-                "duration": 40,
-                "distance": 12000,
-                "nightride": false,
-                "description": "Maloche"
-            },
-            headers: {
-                'api-token': apiToken
-            }
-        }));
+        .map(([date, apiToken]) => Requests.update(date, apiToken as string));
 
     const entries$ = xs.combine(
         sources.HTTP.select('update')
@@ -42,20 +29,13 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
             .map(() => true)
             .startWith(true),
         apiToken$)
-        .map(([_, apiToken]) => ({
-            url: 'https://cors-anywhere.herokuapp.com/https://winterpokal.mtb-news.de/api/v1/entries/my.json',
-            category: 'entries',
-            method: 'GET',
-            headers: {
-                'api-token': apiToken
-            }
-        }));
+        .map(([_, apiToken]) => Requests.fetch(apiToken as string));
 
     const sinks = {
         DOM: xs.combine(
             sources.HTTP.select('entries')
                 .flatten()
-                .map(entry => entry.body.data),
+                .map(response => Requests.mapResponse()(response)),
             xs.of(getDays()))
             .map(([entries, days]) => mergeDaysAndEntries(days, entries))
             .map(weeks => {
