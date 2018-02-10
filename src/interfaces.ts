@@ -6,6 +6,10 @@ import { TimeSource } from '@cycle/time';
 import { RouterSource, HistoryAction } from 'cyclic-router';
 import { Moment } from 'moment';
 
+export const UPDATE_ENTRY: 'UPDATE_ENTRY' = 'UPDATE_ENTRY';
+export const UPDATE_ENTRIES: 'UPDATE_ENTRIES' = 'UPDATE_ENTRIES';
+export const FETCH_ENTRIES: 'FETCH_ENTRIES' = 'FETCH_ENTRIES';
+
 export interface BaseSources {
     DOM: DOMSource;
     HTTP: HTTPSource;

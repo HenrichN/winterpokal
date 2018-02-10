@@ -1,4 +1,4 @@
-const DEV = false;
+const DEV = true;
 
 export function update(date: string, apiToken: string) {
   const url = DEV ? 'https://my-json-server.typicode.com/HenrichN/fuzzy-journey/entries' :
