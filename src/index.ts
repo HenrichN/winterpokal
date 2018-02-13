@@ -59,7 +59,6 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
             intent$.filter(action => action.type === UPDATE_ENTRY || action.type === FETCH_ENTRIES),
             apiToken$)
             .map(([action, apiToken]) => {
-                console.log(action.type);
                 switch (action.type) {
                     case UPDATE_ENTRY: return Requests.update(action.payload, apiToken as string)
                     case FETCH_ENTRIES: return Requests.fetch(apiToken as string)
