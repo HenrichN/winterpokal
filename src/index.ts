@@ -53,18 +53,19 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
         return div('.test', acc);
     });
 
+    const fetchEntriesRequest$ = xs.combine(
+        intent$.filter(action => action.type === FETCH_ENTRIES),
+        apiToken$)
+        .map(([_, apiToken]) => Requests.fetch(apiToken as string));
+
+    const updateEntryRequest$ = xs.combine(
+        intent$.filter(action => action.type === UPDATE_ENTRY),
+        apiToken$)
+        .map(([action, apiToken]) => Requests.update((action as any).payload, apiToken as string));
+
     return {
         DOM: view$,
-        HTTP: xs.combine(
-            intent$.filter(action => action.type === UPDATE_ENTRY || action.type === FETCH_ENTRIES),
-            apiToken$)
-            .map(([action, apiToken]) => {
-                switch (action.type) {
-                    case UPDATE_ENTRY: return Requests.update(action.payload, apiToken as string)
-                    case FETCH_ENTRIES: return Requests.fetch(apiToken as string)
-                    default: return null
-                }
-            })
+        HTTP: xs.merge(fetchEntriesRequest$, updateEntryRequest$)
     };
 }
 
