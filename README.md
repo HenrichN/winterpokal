@@ -1,34 +1,7 @@
-## Your amazing project
+## winterpokal
 
-Thanks for using the `one-fits-all` flavor.
+A web app which allows to more easily post entries to https://winterpokal.mtb-news.de/.
 
-### Using your app
+The app is specifically tailored for entering reoccuring entries with a single click, like riding a bike to work every day.
 
-Run in development mode: `npm start`
-Build a production build: `npm run build`
-Run the unit tests: `npm test`
-
-### Extending the configuration
-
-If you want to add custom config to webpack, you can do it! Just edit the `webpack.config.js` in your app's root directory. It will be merged with the default config.
-
-Example: Adding the progress bar plugin:
-```javascript
-const ProgressBarPlugin = require('progress-bar-webpack-plugin');
-
-module.exports = {
-    plugins: [
-        new ProgressBarPlugin()
-    ]
-}
-```
-Example: Add API proxy for devServer
-```javascript
-module.exports = {
-    devServer: {
-        proxy: {
-            "/api": "http://localhost:3000"
-        }
-    }
-}
-```
+The app is made with [Cycle.js](https://cycle.js.org/) and [TypeScript](https://www.typescriptlang.org/).
