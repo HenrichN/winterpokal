@@ -1,20 +1,24 @@
 import xs from 'xstream';
 import { run } from '@cycle/run';
-import { makeDOMDriver, VNode, span, div } from '@cycle/dom';
-import { html } from 'snabbdom-jsx';
+import { makeDOMDriver, VNode, span, div, p, pre } from '@cycle/dom';
 import storageDriver from '@cycle/storage';
 import { makeHTTPDriver } from '@cycle/http';
 import * as _ from 'lodash';
-import { BaseSources, BaseSinks, UPDATE_ENTRY, FETCH_ENTRIES, UPDATE_ENTRIES } from './interfaces';
+import { BaseSources, BaseSinks, UPDATE_ENTRY, FETCH_ENTRIES, UPDATE_ENTRIES, EntryTemplate } from './interfaces';
 import { FantasySinks } from '@cycle/run/lib/types';
 import { getDays, mergeDaysAndEntries } from './model';
 import { renderWeek } from './components/week';
 import * as Requests from './requests';
 import { fetch } from './requests';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function main(sources: BaseSources): FantasySinks<BaseSinks> {
     const apiToken$ = sources.storage.local
         .getItem('api-token');
+
+    const entryTemplate$ = sources.storage.local
+        .getItem('entry-template')
+        .map(entry => JSON.parse(entry as string))
 
     const intent$ = xs.merge(
         sources.DOM.select('.day')
@@ -38,19 +42,32 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
     const updateEntriesReducer$ = intent$
         .filter(action => action.type === UPDATE_ENTRIES)
         .map((action: any) => (state: any) => {
-            return mergeDaysAndEntries(getDays(), action.payload);
+            const weeks = mergeDaysAndEntries(getDays(), action.payload);
+            return Object.assign({}, state, { weeks });
         });
 
-    const model$ = xs.merge(updateEntriesReducer$)
-        .fold((state, reducer) => reducer(state), [] as any);
+    const entryTemplateExistsReducer$ = entryTemplate$
+        .map((template: EntryTemplate) => (state: any) => {
+            return Object.assign({}, state, { entryTemplate: template });
+        });
 
-    const view$ = model$.map(weeks => {
-        let acc: VNode[] = [];
-        let elements = _.reduce(weeks, (acc, cur, index) => {
-            acc.push(renderWeek(cur));
-            return acc;
-        }, acc);
-        return div('.test', acc);
+    const model$ = xs.merge(updateEntriesReducer$, entryTemplateExistsReducer$)
+        .fold((state, reducer) => reducer(state), {} as any);
+
+    const view$ = model$.map(state => {
+        if (state.entryTemplate) {
+            let acc: VNode[] = [];
+            console.log(state);
+            let elements = _.reduce(state.weeks, (acc, cur, index) => {
+                acc.push(renderWeek(cur));
+                return acc;
+            }, acc);
+            return div('.test', acc);
+        } else {
+            return div('.alert .alert-danger',
+                [p('No entry template found - please add an entry "entry-template" to local storage'),
+                pre('{ "category": "radfahren", "duration": 40, "distance": 12000, "description": "Maloche" }')]);
+        }
     });
 
     const fetchEntriesRequest$ = xs.combine(
@@ -60,8 +77,11 @@ function main(sources: BaseSources): FantasySinks<BaseSinks> {
 
     const updateEntryRequest$ = xs.combine(
         intent$.filter(action => action.type === UPDATE_ENTRY),
-        apiToken$)
-        .map(([action, apiToken]) => Requests.update((action as any).payload, apiToken as string));
+        apiToken$,
+        entryTemplate$.filter(e => e !== null))
+        .map(([action, apiToken, entryTemplate]) => Requests.update((action as any).payload,
+            entryTemplate as EntryTemplate,
+            apiToken as string));
 
     return {
         DOM: view$,

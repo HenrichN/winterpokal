@@ -11,5 +11,13 @@ module.exports = {
         filename: 'bundle.[hash].js',
         path: appPath('build'),
         publicPath: '/'
-    }
+    },
+    module: {
+        rules: [
+          {
+            test: /\.css$/,
+            use: ['style-loader', 'css-loader']
+          }
+        ]
+      }
 };

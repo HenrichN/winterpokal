@@ -23,6 +23,7 @@
     "@cycle/run": "^3.3.0",
     "@cycle/storage": "^4.1.1",
     "@cycle/time": "^0.10.1",
+    "bootstrap": "^4.0.0",
     "cycle-onionify": "^4.0.0",
     "cycle-storageify": "^4.0.0",
     "cyclejs-utils": "^2.0.0",
