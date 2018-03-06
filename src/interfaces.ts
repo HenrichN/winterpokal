@@ -52,3 +52,10 @@ export interface WinterpokalEntry {
         url: string;
     }
 }
+
+export interface EntryTemplate {
+    "category": string;
+    "duration": number;
+    "distance": number;
+    "description": string;
+}

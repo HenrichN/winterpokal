@@ -1,9 +1,12 @@
+import { EntryTemplate } from './interfaces';
+
 const DEV = false;
 
-export function update(date: string, apiToken: string) {
+export function update(date: string, entryTemplate: EntryTemplate, apiToken: string) {
   // const url = DEV ? 'https://my-json-server.typicode.com/HenrichN/fuzzy-journey/entries' :
   const url = DEV ? 'http://localhost:3000/entries' :
     'https://cors-anywhere.herokuapp.com/https://winterpokal.mtb-news.de/api/v1/entries/add.json?' + Date.now();
+  const entry = Object.assign({}, entryTemplate, { date, nightride: false });
 
   if (DEV) {
     return {
@@ -12,14 +15,7 @@ export function update(date: string, apiToken: string) {
       method: 'POST',
       send: {
         data: {
-          entry: {
-            "category": "radfahren",
-            date,
-            "duration": 40,
-            "distance": 12000,
-            "nightride": false,
-            "description": "Maloche"
-          }
+          entry
         }
       },
       headers: {
@@ -31,14 +27,7 @@ export function update(date: string, apiToken: string) {
       url,
       category: 'update',
       method: 'POST',
-      send: {
-        "category": "radfahren",
-        date,
-        "duration": 40,
-        "distance": 12000,
-        "nightride": false,
-        "description": "Maloche"
-      },
+      send: entry,
       headers: {
         'api-token': apiToken
       }
